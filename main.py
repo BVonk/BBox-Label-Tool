@@ -196,6 +196,9 @@ class LabelTool():
         # load image
         imagepath = self.imageList[self.cur - 1]
         self.img = Image.open(imagepath)
+        size = self.img.size
+        self.factor = max(size[0]/1000, size[1]/1000., 1.)
+        self.img = self.img.resize((int(size[0]/self.factor) , int(size[1]/self.factor)))
         self.tkimg = ImageTk.PhotoImage(self.img)
         self.mainPanel.config(width = max(self.tkimg.width(), 400), height = max(self.tkimg.height(), 400))
         self.mainPanel.create_image(0, 0, image = self.tkimg, anchor=NW)
@@ -215,7 +218,10 @@ class LabelTool():
                         continue
                     # tmp = [int(t.strip()) for t in line.split()]
                     tmp = line.split()
-                    #print tmp
+                    tmp[0] = int(int(tmp[0])/self.factor)
+                    tmp[1] = int(int(tmp[1])/self.factor)
+                    tmp[2] = int(int(tmp[2])/self.factor)
+                    tmp[3] = int(int(tmp[3])/self.factor)
                     self.bboxList.append(tuple(tmp))
                     tmpId = self.mainPanel.create_rectangle(int(tmp[0]), int(tmp[1]), \
                                                             int(tmp[2]), int(tmp[3]), \
@@ -231,7 +237,7 @@ class LabelTool():
         with open(self.labelfilename, 'w') as f:
             f.write('%d\n' %len(self.bboxList))
             for bbox in self.bboxList:
-                f.write(' '.join(map(str, bbox)) + '\n')
+                f.write("{} {} {} {} {}\n".format(int(int(bbox[0])*self.factor), int(int(bbox[1])*self.factor), int(int(bbox[2])*self.factor), int(int(bbox[3])*self.factor), bbox[4]))
         print 'Image No. %d saved' %(self.cur)
 
 
