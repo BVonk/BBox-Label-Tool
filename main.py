@@ -10,13 +10,12 @@ from __future__ import division
 from Tkinter import *
 import tkMessageBox
 from PIL import Image, ImageTk
-import ttk
 import os
 import glob
 import random
 
 # colors for the bboxes
-COLORS = ['red', 'blue', 'olive', 'teal', 'cyan', 'green', 'black']
+COLORS = ['red', 'blue', 'yellow', 'pink', 'cyan', 'green', 'black']
 # image sizes for the examples
 SIZE = 256, 256
 
@@ -41,9 +40,6 @@ class LabelTool():
         self.imagename = ''
         self.labelfilename = ''
         self.tkimg = None
-        self.currentLabelclass = ''
-        self.cla_can_temp = []
-        self.classcandidate_filename = 'class.txt'
 
         # initialize mouse state
         self.STATE = {}
@@ -64,7 +60,7 @@ class LabelTool():
         self.entry = Entry(self.frame)
         self.entry.grid(row = 0, column = 1, sticky = W+E)
         self.ldBtn = Button(self.frame, text = "Load", command = self.loadDir)
-        self.ldBtn.grid(row = 0, column = 2,sticky = W+E)
+        self.ldBtn.grid(row = 0, column = 2, sticky = W+E)
 
         # main panel for labeling
         self.mainPanel = Canvas(self.frame, cursor='tcross')
@@ -76,34 +72,19 @@ class LabelTool():
         self.parent.bind("d", self.nextImage) # press 'd' to go forward
         self.mainPanel.grid(row = 1, column = 1, rowspan = 4, sticky = W+N)
 
-        # choose class
-        self.classname = StringVar()
-        self.classcandidate = ttk.Combobox(self.frame,state='readonly',textvariable=self.classname)
-        self.classcandidate.grid(row=1,column=2)
-        if os.path.exists(self.classcandidate_filename):
-        	with open(self.classcandidate_filename) as cf:
-        		for line in cf.readlines():
-        			# print line
-        			self.cla_can_temp.append(line.strip('\n'))
-        self.classcandidate['values'] = self.cla_can_temp
-        self.classcandidate.current(0)
-        self.currentLabelclass = self.classcandidate.get() #init
-        self.btnclass = Button(self.frame, text = 'ComfirmClass', command = self.setClass)
-        self.btnclass.grid(row=2,column=2,sticky = W+E)
-
         # showing bbox info & delete bbox
         self.lb1 = Label(self.frame, text = 'Bounding boxes:')
-        self.lb1.grid(row = 3, column = 2,  sticky = W+N)
+        self.lb1.grid(row = 1, column = 2,  sticky = W+N)
         self.listbox = Listbox(self.frame, width = 22, height = 12)
-        self.listbox.grid(row = 4, column = 2, sticky = N+S)
+        self.listbox.grid(row = 2, column = 2, sticky = N)
         self.btnDel = Button(self.frame, text = 'Delete', command = self.delBBox)
-        self.btnDel.grid(row = 5, column = 2, sticky = W+E+N)
+        self.btnDel.grid(row = 3, column = 2, sticky = W+E+N)
         self.btnClear = Button(self.frame, text = 'ClearAll', command = self.clearBBox)
-        self.btnClear.grid(row = 6, column = 2, sticky = W+E+N)
+        self.btnClear.grid(row = 4, column = 2, sticky = W+E+N)
 
         # control panel for image navigation
         self.ctrPanel = Frame(self.frame)
-        self.ctrPanel.grid(row = 7, column = 1, columnspan = 2, sticky = W+E)
+        self.ctrPanel.grid(row = 5, column = 1, columnspan = 2, sticky = W+E)
         self.prevBtn = Button(self.ctrPanel, text='<< Prev', width = 10, command = self.prevImage)
         self.prevBtn.pack(side = LEFT, padx = 5, pady = 3)
         self.nextBtn = Button(self.ctrPanel, text='Next >>', width = 10, command = self.nextImage)
@@ -117,16 +98,15 @@ class LabelTool():
         self.goBtn = Button(self.ctrPanel, text = 'Go', command = self.gotoImage)
         self.goBtn.pack(side = LEFT)
 
-
-#        # example pannel for illustration
-#        self.egPanel = Frame(self.frame, border = 10)
-#        self.egPanel.grid(row = 1, column = 0, rowspan = 5, sticky = N)
-#        self.tmpLabel2 = Label(self.egPanel, text = "Examples:")
-#        self.tmpLabel2.pack(side = TOP, pady = 5)
-#        self.egLabels = []
-#        for i in range(3):
-#            self.egLabels.append(Label(self.egPanel))
-#            self.egLabels[-1].pack(side = TOP)
+        # example pannel for illustration
+        self.egPanel = Frame(self.frame, border = 10)
+        self.egPanel.grid(row = 1, column = 0, rowspan = 5, sticky = N)
+        self.tmpLabel2 = Label(self.egPanel, text = "Examples:")
+        self.tmpLabel2.pack(side = TOP, pady = 5)
+        self.egLabels = []
+        for i in range(3):
+            self.egLabels.append(Label(self.egPanel))
+            self.egLabels[-1].pack(side = TOP)
 
         # display mouse position
         self.disp = Label(self.ctrPanel, text='')
@@ -140,17 +120,20 @@ class LabelTool():
 ##        self.loadDir()
 
     def loadDir(self, dbg = False):
-        s = self.entry.get()
-        self.parent.focus()
-
+        if not dbg:
+            s = self.entry.get()
+            self.parent.focus()
+            self.category = int(s)
+        else:
+            s = r'D:\workspace\python\labelGUI'
+##        if not os.path.isdir(s):
+##            tkMessageBox.showerror("Error!", message = "The specified dir doesn't exist!")
+##            return
         # get image list
-        self.imageDir = s
-        #print(self.imageDir)
-        #print(self.category)
-        self.imageList = glob.glob(os.path.join(self.imageDir, '*.tiff'))
-        #print(self.imageList)
+        self.imageDir = os.path.join(r'./Images', '%03d' %(self.category))
+        self.imageList = glob.glob(os.path.join(self.imageDir, '*.JPEG'))
         if len(self.imageList) == 0:
-            print ('No .JPG images found in the specified dir!')
+            print 'No .JPEG images found in the specified dir!'
             return
 
         # default to the 1st image in the collection
@@ -158,40 +141,35 @@ class LabelTool():
         self.total = len(self.imageList)
 
          # set up output dir
-        self.outDir = s
+        self.outDir = os.path.join(r'./Labels', '%03d' %(self.category))
         if not os.path.exists(self.outDir):
             os.mkdir(self.outDir)
 
         # load example bboxes
-        #self.egDir = os.path.join(r'./Examples', '%03d' %(self.category))
-#        self.egDir = os.path.join(r'./Examples/demo')
-#        print(os.path.exists(self.egDir))
-#        if not os.path.exists(self.egDir):
-#            return
-#        filelist = glob.glob(os.path.join(self.egDir, '*.JPG'))
-#        self.tmp = []
-#        self.egList = []
-#        random.shuffle(filelist)
-#        for (i, f) in enumerate(filelist):
-#            if i == 3:
-#                break
-#            im = Image.open(f)
-#            r = min(SIZE[0] / im.size[0], SIZE[1] / im.size[1])
-#            new_size = int(r * im.size[0]), int(r * im.size[1])
-#            self.tmp.append(im.resize(new_size, Image.ANTIALIAS))
-#            self.egList.append(ImageTk.PhotoImage(self.tmp[-1]))
-#            self.egLabels[i].config(image = self.egList[-1], width = SIZE[0], height = SIZE[1])
+        self.egDir = os.path.join(r'./Examples', '%03d' %(self.category))
+        if not os.path.exists(self.egDir):
+            return
+        filelist = glob.glob(os.path.join(self.egDir, '*.JPEG'))
+        self.tmp = []
+        self.egList = []
+        random.shuffle(filelist)
+        for (i, f) in enumerate(filelist):
+            if i == 3:
+                break
+            im = Image.open(f)
+            r = min(SIZE[0] / im.size[0], SIZE[1] / im.size[1])
+            new_size = int(r * im.size[0]), int(r * im.size[1])
+            self.tmp.append(im.resize(new_size, Image.ANTIALIAS))
+            self.egList.append(ImageTk.PhotoImage(self.tmp[-1]))
+            self.egLabels[i].config(image = self.egList[-1], width = SIZE[0], height = SIZE[1])
 
         self.loadImage()
-        print('%d images loaded from %s' %(self.total, s))
+        print '%d images loaded from %s' %(self.total, s)
 
     def loadImage(self):
         # load image
         imagepath = self.imageList[self.cur - 1]
         self.img = Image.open(imagepath)
-        size = self.img.size
-        self.factor = max(size[0]/(scrwidth-240), size[1]/(scrheight-120), 1.)
-        self.img = self.img.resize((int(size[0]/self.factor) , int(size[1]/self.factor)))
         self.tkimg = ImageTk.PhotoImage(self.img)
         self.mainPanel.config(width = max(self.tkimg.width(), 400), height = max(self.tkimg.height(), 400))
         self.mainPanel.create_image(0, 0, image = self.tkimg, anchor=NW)
@@ -209,28 +187,23 @@ class LabelTool():
                     if i == 0:
                         bbox_cnt = int(line.strip())
                         continue
-                    # tmp = [int(t.strip()) for t in line.split()]
-                    tmp = line.split()
-                    tmp[0], tmp[1], tmp[2], tmp[3] = int(tmp[0])/self.factor, int(tmp[1])/self.factor, int(tmp[2])/self.factor, int(tmp[3])/self.factor
-                    print tmp
+                    tmp = [int(t.strip()) for t in line.split()]
+##                    print tmp
                     self.bboxList.append(tuple(tmp))
-                    tmpId = self.mainPanel.create_rectangle(int(tmp[0]), int(tmp[1]), \
-                                                            int(tmp[2]), int(tmp[3]), \
+                    tmpId = self.mainPanel.create_rectangle(tmp[0], tmp[1], \
+                                                            tmp[2], tmp[3], \
                                                             width = 2, \
                                                             outline = COLORS[(len(self.bboxList)-1) % len(COLORS)])
-                    # print tmpId
                     self.bboxIdList.append(tmpId)
-                    self.listbox.insert(END, '%s : (%d, %d) -> (%d, %d)' %(tmp[4],int(tmp[0]), int(tmp[1]), \
-                    												  int(tmp[2]), int(tmp[3])))
+                    self.listbox.insert(END, '(%d, %d) -> (%d, %d)' %(tmp[0], tmp[1], tmp[2], tmp[3]))
                     self.listbox.itemconfig(len(self.bboxIdList) - 1, fg = COLORS[(len(self.bboxIdList) - 1) % len(COLORS)])
 
     def saveImage(self):
         with open(self.labelfilename, 'w') as f:
             f.write('%d\n' %len(self.bboxList))
             for bbox in self.bboxList:
-                print("box", bbox)
-                f.write(' '.join(map(str, (int(int(bbox[0])*self.factor), int(int(bbox[1])*self.factor), int(int(bbox[2])*self.factor), int(int(bbox[3])*self.factor), bbox[4]))) + '\n')
-        print('Image No. %d saved' %(self.cur))
+                f.write(' '.join(map(str, bbox)) + '\n')
+        print 'Image No. %d saved' %(self.cur)
 
 
     def mouseClick(self, event):
@@ -239,10 +212,10 @@ class LabelTool():
         else:
             x1, x2 = min(self.STATE['x'], event.x), max(self.STATE['x'], event.x)
             y1, y2 = min(self.STATE['y'], event.y), max(self.STATE['y'], event.y)
-            self.bboxList.append((x1, y1, x2, y2, self.currentLabelclass))
+            self.bboxList.append((x1, y1, x2, y2))
             self.bboxIdList.append(self.bboxId)
             self.bboxId = None
-            self.listbox.insert(END, '%s : (%d, %d) -> (%d, %d)' %(self.currentLabelclass,x1, y1, x2, y2))
+            self.listbox.insert(END, '(%d, %d) -> (%d, %d)' %(x1, y1, x2, y2))
             self.listbox.itemconfig(len(self.bboxIdList) - 1, fg = COLORS[(len(self.bboxIdList) - 1) % len(COLORS)])
         self.STATE['click'] = 1 - self.STATE['click']
 
@@ -306,10 +279,6 @@ class LabelTool():
             self.cur = idx
             self.loadImage()
 
-    def setClass(self):
-    	self.currentLabelclass = self.classcandidate.get()
-    	print('set label class to :',self.currentLabelclass)
-
 ##    def setImage(self, imagepath = r'test2.png'):
 ##        self.img = Image.open(imagepath)
 ##        self.tkimg = ImageTk.PhotoImage(self.img)
@@ -319,8 +288,6 @@ class LabelTool():
 
 if __name__ == '__main__':
     root = Tk()
-    scrwidth, scrheight = root.winfo_screenwidth(), root.winfo_screenheight()
-    print scrwidth, scrheight
     tool = LabelTool(root)
     root.resizable(width =  True, height = True)
     root.mainloop()
