@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This script is to convert the txt annotation files to appropriate format needed by
+This script is to convert the txt annotation files to appropriate format needed by darknet
 """
 
 print("Converting bboxes to VOC format")
@@ -14,15 +14,16 @@ from PIL import Image
 
 """ Configure Paths"""
 
-mypath = "H:/My Drive/dataset/Labels/009/"
+mypath = "E:/DATA/labels/"
 
-outpath = "H:/My Drive/dataset/Labels/009yolo/"
+outpath = "E:/DATA/labelsvoc/"
 
-imagepath = "H:/My Drive/dataset/Images/009/"
+imagepath = "E:/DATA/Images/"
 
 classes = ["bird", "human"]
 
-
+if not os.path.isdir(outpath):
+     os.mkdir(outpath)
 
 def convert(size, box):
     dw = 1./size[0]
@@ -47,7 +48,7 @@ def get_cls_id(cls):
 
 
 """-------------------------------------------------------------------"""
-list_file = open('%s/list.txt'%(outpath), 'w')
+#list_file = open('%s/list.txt'%(outpath), 'w')
 
 """ Get input text file list """
 txt_name_list = []
@@ -70,10 +71,12 @@ for txt_name in txt_name_list:
 
     """ Convert the data to YOLO format """
     ct = 0
+    print txt_name
     for line in lines:
 
         elems = line.split(' ')
         if(len(elems) == 5):
+            #print elems
 
             ct = ct + 1
             elems = line.split(' ')
@@ -82,7 +85,7 @@ for txt_name in txt_name_list:
             ymin = elems[1]
             ymax = elems[3]
             cls = elems[4]
-            img_path = str('%s%s.jpg'%(imagepath, os.path.splitext(txt_name)[0]))
+            img_path = str('%s%s.tiff'%(imagepath, os.path.splitext(txt_name)[0]))
             im=Image.open(img_path)
             w= int(im.size[0])
             h= int(im.size[1])
@@ -92,7 +95,7 @@ for txt_name in txt_name_list:
             txt_outfile.write(str(get_cls_id(cls)) + " " + " ".join([str(a) for a in bb]) + '\n')
 
     """ Save those images with bb into list"""
-    if(ct != 0):
-        list_file.write('%s%s.jpg\n'%(imagepath, os.path.splitext(txt_name)[0]))
+    #if(ct != 0):
+        #list_file.write('%s%s.jpg\n'%(imagepath, os.path.splitext(txt_name)[0]))
 
-list_file.close()
+#list_file.close()
